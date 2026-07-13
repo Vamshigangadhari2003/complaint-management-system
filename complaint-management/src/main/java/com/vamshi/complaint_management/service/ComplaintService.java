@@ -17,8 +17,10 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ComplaintService {
+
     private final ComplaintRepository complaintRepository;
     private final UserRepository userRepository;
+    private final EmailService emailService;
 
     private User getCurrentUser() {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder
@@ -54,7 +56,17 @@ public class ComplaintService {
                 .priority(request.getPriority())
                 .user(currentUser)
                 .build();
-        return mapToResponse(complaintRepository.save(complaint));
+        Complaint saved = complaintRepository.save(complaint);
+
+        // Send email notification
+        emailService.sendComplaintRaisedEmail(
+                currentUser.getEmail(),
+                currentUser.getName(),
+                saved.getId(),
+                saved.getTitle()
+        );
+
+        return mapToResponse(saved);
     }
 
     // USER: view my complaints
@@ -83,7 +95,19 @@ public class ComplaintService {
         if (resolutionNotes != null) {
             complaint.setResolutionNotes(resolutionNotes);
         }
-        return mapToResponse(complaintRepository.save(complaint));
+        Complaint saved = complaintRepository.save(complaint);
+
+        // Send email notification to user
+        emailService.sendStatusUpdateEmail(
+                saved.getUser().getEmail(),
+                saved.getUser().getName(),
+                saved.getId(),
+                saved.getTitle(),
+                status.name(),
+                resolutionNotes
+        );
+
+        return mapToResponse(saved);
     }
 
     // ADMIN: view all complaints
@@ -101,7 +125,17 @@ public class ComplaintService {
                 .orElseThrow(() -> new RuntimeException("Agent not found"));
         complaint.setAgent(agent);
         complaint.setStatus(ComplaintStatus.ASSIGNED);
-        return mapToResponse(complaintRepository.save(complaint));
+        Complaint saved = complaintRepository.save(complaint);
+
+        // Send email notification to agent
+        emailService.sendComplaintAssignedEmail(
+                agent.getEmail(),
+                agent.getName(),
+                saved.getId(),
+                saved.getTitle()
+        );
+
+        return mapToResponse(saved);
     }
 
     // ADMIN: get all agents
