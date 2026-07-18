@@ -50,30 +50,37 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request, HttpServletRequest httpRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getPassword()
+                    )
+            );
 
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        String token = jwtUtil.generateToken(userDetails);
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            User user = userDetails.getUser();
+            String token = jwtUtil.generateToken(userDetails);
 
-        // Save login history
-        LoginHistory loginHistory = LoginHistory.builder()
-                .user(userDetails.getUser())
-                .ipAddress(httpRequest.getRemoteAddr())
-                .build();
-        loginHistoryRepository.save(loginHistory);
+            // Save login history
+            LoginHistory loginHistory = LoginHistory.builder()
+                    .user(user)
+                    .ipAddress(httpRequest.getRemoteAddr())
+                    .build();
+            loginHistoryRepository.save(loginHistory);
 
-        return AuthResponse.builder()
-                .token(token)
-                .email(userDetails.getUsername())
-                .name(userDetails.getUser().getName())
-                .role(userDetails.getUser().getRole().name())
-                .message("Login successful")
-                .build();
+            return AuthResponse.builder()
+                    .token(token)
+                    .email(user.getEmail())
+                    .name(user.getName())
+                    .role(user.getRole().name())
+                    .message("Login successful")
+                    .build();
+        } catch (Exception e) {
+            System.err.println("Login error: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     public void logout(HttpServletRequest request) {

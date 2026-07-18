@@ -1,6 +1,6 @@
 package com.vamshi.complaint_management.exception;
-import com.vamshi.complaint_management.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
+import com.vamshi.complaint_management.dto.ErrorResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -26,6 +27,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntimeException(
             RuntimeException ex) {
+        // Don't catch auth exceptions here
+        if (ex instanceof org.springframework.security.core.AuthenticationException) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.builder()
+                            .status(HttpStatus.UNAUTHORIZED.value())
+                            .message("Invalid credentials")
+                            .timestamp(LocalDateTime.now())
+                            .build());
+        }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ErrorResponse.builder()
                         .status(HttpStatus.BAD_REQUEST.value())
