@@ -143,4 +143,13 @@ public class ComplaintService {
         return userRepository.findByRole(
                 com.vamshi.complaint_management.enums.Role.AGENT);
     }
+    // ADMIN: search and filter complaints
+    public List<ComplaintResponse> searchComplaints(
+            ComplaintStatus status,
+            com.vamshi.complaint_management.enums.Category category,
+            com.vamshi.complaint_management.enums.Priority priority) {
+        return complaintRepository.searchComplaints(status, category, priority)
+                .stream().map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
 }
