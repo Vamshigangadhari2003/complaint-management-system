@@ -1,9 +1,355 @@
 <!DOCTYPE html>
-<html>
-<head><title>User Dashboard</title></head>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard - ComplaintMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #050510; color: #fff; min-height: 100vh; display: flex; }
+
+        .sidebar { width: 260px; min-height: 100vh; background: rgba(255,255,255,0.03); border-right: 1px solid rgba(255,255,255,0.06); padding: 2rem 1rem; display: flex; flex-direction: column; position: fixed; left: 0; top: 0; z-index: 100; }
+        .logo { display: flex; align-items: center; gap: 0.8rem; padding: 0 0.5rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 1.5rem; }
+        .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #6c63ff, #00d2ff); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .logo h2 { font-size: 1.1rem; font-weight: 700; background: linear-gradient(135deg, #6c63ff, #00d2ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .logo p { font-size: 0.7rem; color: rgba(255,255,255,0.3); }
+        .nav-section { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.3); padding: 0 0.5rem; margin-bottom: 0.5rem; margin-top: 1rem; }
+        .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 10px; cursor: pointer; color: rgba(255,255,255,0.5); transition: all 0.2s ease; margin-bottom: 0.2rem; font-size: 0.88rem; font-weight: 500; border: 1px solid transparent; }
+        .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .nav-item.active { background: rgba(108,99,255,0.15); color: #fff; border-color: rgba(108,99,255,0.3); }
+        .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06); }
+        .user-info { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border-radius: 10px; background: rgba(255,255,255,0.04); margin-bottom: 0.75rem; }
+        .user-avatar { width: 36px; height: 36px; background: linear-gradient(135deg, #6c63ff, #00d2ff); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 700; }
+        .user-details p:first-child { font-size: 0.85rem; font-weight: 600; }
+        .user-details p:last-child { font-size: 0.72rem; color: rgba(255,255,255,0.4); }
+        .logout-btn { width: 100%; padding: 0.7rem; background: rgba(255,82,82,0.1); border: 1px solid rgba(255,82,82,0.2); border-radius: 10px; color: #ff5252; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-family: 'Inter', sans-serif; }
+        .logout-btn:hover { background: rgba(255,82,82,0.2); }
+
+        .main { margin-left: 260px; flex: 1; padding: 2rem; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .header h1 { font-size: 1.6rem; font-weight: 700; }
+        .header p { color: rgba(255,255,255,0.4); font-size: 0.85rem; margin-top: 0.2rem; }
+        .badge-role { padding: 0.4rem 1rem; background: rgba(0,230,118,0.15); border: 1px solid rgba(0,230,118,0.3); border-radius: 20px; font-size: 0.78rem; font-weight: 600; color: #00e676; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 1.5rem; transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--color); }
+        .stat-card:hover { transform: translateY(-3px); }
+        .stat-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+        .stat-number { font-size: 2rem; font-weight: 800; color: var(--color); line-height: 1; }
+        .stat-label { font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-top: 0.3rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .tab-btn { padding: 0.7rem 1.2rem; background: none; border: none; color: rgba(255,255,255,0.4); font-size: 0.88rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s ease; }
+        .tab-btn.active { color: #6c63ff; border-bottom-color: #6c63ff; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .form-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 2rem; margin-bottom: 1.5rem; }
+        .form-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 1.5rem; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 0.78rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.8rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: #fff; font-size: 0.9rem; font-family: 'Inter', sans-serif; outline: none; transition: all 0.2s ease; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #6c63ff; background: rgba(108,99,255,0.08); }
+        .form-group select option { background: #12122a; }
+        .form-group textarea { resize: vertical; min-height: 100px; }
+
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s ease; }
+        .btn-primary { background: linear-gradient(135deg, #6c63ff, #00d2ff); color: #fff; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.78rem; }
+
+        .table-wrap { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        thead th { padding: 1rem 1.2rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        tbody td { padding: 1rem 1.2rem; font-size: 0.88rem; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+        tbody tr:hover td { background: rgba(255,255,255,0.02); }
+        tbody tr:last-child td { border-bottom: none; }
+
+        .badge { padding: 0.25rem 0.7rem; border-radius: 20px; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; }
+        .badge-OPEN { background: rgba(255,82,82,0.15); color: #ff5252; border: 1px solid rgba(255,82,82,0.3); }
+        .badge-ASSIGNED { background: rgba(64,196,255,0.15); color: #40c4ff; border: 1px solid rgba(64,196,255,0.3); }
+        .badge-IN_PROGRESS { background: rgba(255,214,0,0.15); color: #ffd600; border: 1px solid rgba(255,214,0,0.3); }
+        .badge-RESOLVED { background: rgba(0,230,118,0.15); color: #00e676; border: 1px solid rgba(0,230,118,0.3); }
+        .badge-CLOSED { background: rgba(160,160,192,0.15); color: #a0a0c0; border: 1px solid rgba(160,160,192,0.3); }
+        .priority-HIGH { color: #ff5252; font-weight: 600; }
+        .priority-MEDIUM { color: #ffd600; font-weight: 600; }
+        .priority-LOW { color: #00e676; font-weight: 600; }
+
+        .toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem; border-radius: 12px; color: #fff; font-size: 0.88rem; font-weight: 600; z-index: 9999; animation: toastIn 0.3s ease; max-width: 320px; font-family: 'Inter', sans-serif; }
+        .toast-success { background: linear-gradient(135deg, #00b09b, #96c93d); }
+        .toast-error { background: linear-gradient(135deg, #ff416c, #ff4b2b); }
+        .toast-info { background: linear-gradient(135deg, #6c63ff, #00d2ff); }
+        @keyframes toastIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        .empty-state { text-align: center; padding: 3rem; color: rgba(255,255,255,0.3); }
+        .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .spinner { width: 30px; height: 30px; border: 3px solid rgba(255,255,255,0.1); border-top-color: #6c63ff; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 2rem auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
 <body>
-<h1 style="color:white;background:#0a0a1a;min-height:100vh;display:flex;align-items:center;justify-content:center;margin:0;font-family:sans-serif;">
-    User Dashboard — Coming Soon!
-</h1>
+
+<div class="sidebar">
+    <div class="logo">
+        <div class="logo-icon">🛡️</div>
+        <div>
+            <h2>ComplaintMS</h2>
+            <p>User Portal</p>
+        </div>
+    </div>
+    <div class="nav-section">Menu</div>
+    <div class="nav-item active" onclick="showTab('raise')">
+        <span>➕</span> Raise Complaint
+    </div>
+    <div class="nav-item" onclick="showTab('mycomplaints')">
+        <span>📋</span> My Complaints
+    </div>
+    <div class="sidebar-footer">
+        <div class="user-info">
+            <div class="user-avatar" id="avatarText">U</div>
+            <div class="user-details">
+                <p id="sidebarName">User</p>
+                <p>Customer</p>
+            </div>
+        </div>
+        <button class="logout-btn" onclick="handleLogout()">🚪 Sign Out</button>
+    </div>
+</div>
+
+<div class="main">
+    <div class="header">
+        <div>
+            <h1>My Dashboard</h1>
+            <p id="welcomeText">Welcome! Raise and track your complaints here.</p>
+        </div>
+        <span class="badge-role">👤 USER</span>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card" style="--color:#6c63ff">
+            <div class="stat-icon">📋</div>
+            <div class="stat-number" id="statTotal">-</div>
+            <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-card" style="--color:#ff5252">
+            <div class="stat-icon">🔴</div>
+            <div class="stat-number" id="statOpen">-</div>
+            <div class="stat-label">Open</div>
+        </div>
+        <div class="stat-card" style="--color:#ffd600">
+            <div class="stat-icon">⚡</div>
+            <div class="stat-number" id="statProgress">-</div>
+            <div class="stat-label">In Progress</div>
+        </div>
+        <div class="stat-card" style="--color:#00e676">
+            <div class="stat-icon">✅</div>
+            <div class="stat-number" id="statResolved">-</div>
+            <div class="stat-label">Resolved</div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('raise')">➕ Raise Complaint</button>
+        <button class="tab-btn" onclick="showTab('mycomplaints')">📋 My Complaints</button>
+    </div>
+
+    <!-- Raise Complaint Tab -->
+    <div class="tab-content active" id="tab-raise">
+        <div class="form-card">
+            <h3>🆕 Submit New Complaint</h3>
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="title" placeholder="Brief title of your complaint">
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="category">
+                        <option value="">Select category</option>
+                        <option value="TECHNICAL">Technical</option>
+                        <option value="BILLING">Billing</option>
+                        <option value="SERVICE">Service</option>
+                        <option value="GENERAL">General</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select id="priority">
+                        <option value="">Select priority</option>
+                        <option value="LOW">Low</option>
+                        <option value="MEDIUM">Medium</option>
+                        <option value="HIGH">High</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="description" placeholder="Describe your issue in detail..."></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="raiseComplaint()">
+                Submit Complaint →
+            </button>
+        </div>
+    </div>
+
+    <!-- My Complaints Tab -->
+    <div class="tab-content" id="tab-mycomplaints">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>#ID</th>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Agent</th>
+                    <th>Resolution</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody id="complaintsTable">
+                <tr><td colspan="9"><div class="spinner"></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API = 'http://localhost:8080/api';
+    const getToken = () => localStorage.getItem('token');
+    const getUser = () => JSON.parse(localStorage.getItem('user') || '{}');
+
+    const user = getUser();
+    if (!getToken() || user.role !== 'USER') window.location.href = '/index.html';
+
+    document.getElementById('sidebarName').textContent = user.name || 'User';
+    document.getElementById('avatarText').textContent = (user.name || 'U')[0].toUpperCase();
+    document.getElementById('welcomeText').textContent = `Welcome back, ${user.name}!`;
+
+    const api = async (endpoint, method = 'GET', body = null) => {
+        const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` };
+        const config = { method, headers };
+        if (body) config.body = JSON.stringify(body);
+        const res = await fetch(`${API}${endpoint}`, config);
+        if (res.status === 401) { window.location.href = '/index.html'; return null; }
+        return res;
+    };
+
+    const toast = (msg, type = 'info') => {
+        const existing = document.querySelector('.toast');
+        if (existing) existing.remove();
+        const el = document.createElement('div');
+        el.className = `toast toast-${type}`;
+        el.textContent = msg;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 3000);
+    };
+
+    const fmt = (d) => d ? new Date(d).toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '-';
+
+    function showTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
+        document.getElementById(`tab-${tab}`).classList.add('active');
+        document.querySelectorAll('.tab-btn').forEach(t => {
+            if (t.textContent.toLowerCase().includes(tab === 'raise' ? 'raise' : 'my')) t.classList.add('active');
+        });
+        document.querySelectorAll('.nav-item').forEach(t => {
+            if (t.textContent.toLowerCase().includes(tab === 'raise' ? 'raise' : 'my')) t.classList.add('active');
+        });
+        if (tab === 'mycomplaints') loadMyComplaints();
+    }
+
+    async function loadMyComplaints() {
+        const res = await api('/complaints/my');
+        if (!res) return;
+        const data = await res.json();
+
+        document.getElementById('statTotal').textContent = data.length;
+        document.getElementById('statOpen').textContent = data.filter(c => c.status === 'OPEN').length;
+        document.getElementById('statProgress').textContent = data.filter(c => c.status === 'IN_PROGRESS').length;
+        document.getElementById('statResolved').textContent = data.filter(c => c.status === 'RESOLVED').length;
+
+        if (!data.length) {
+            document.getElementById('complaintsTable').innerHTML =
+                `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📭</div><p>No complaints yet. Raise your first one!</p></div></td></tr>`;
+            return;
+        }
+
+        document.getElementById('complaintsTable').innerHTML = data.map(c => `
+            <tr>
+                <td><span style="color:#6c63ff;font-weight:700">#${c.id}</span></td>
+                <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.title}</td>
+                <td style="color:rgba(255,255,255,0.6)">${c.category}</td>
+                <td><span class="priority-${c.priority}">${c.priority}</span></td>
+                <td><span class="badge badge-${c.status}">${c.status.replace('_',' ')}</span></td>
+                <td>${c.agentName ? `<span style="color:#00d2ff">${c.agentName}</span>` : '<span style="color:rgba(255,255,255,0.3)">Pending</span>'}</td>
+                <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgba(255,255,255,0.5)">${c.resolutionNotes || '-'}</td>
+                <td style="font-size:0.8rem;color:rgba(255,255,255,0.4)">${fmt(c.createdAt)}</td>
+                <td>
+                    ${c.status === 'RESOLVED' ? `
+                        <button onclick="closeComplaint(${c.id})" style="padding:0.3rem 0.7rem;background:rgba(160,160,192,0.15);border:1px solid rgba(160,160,192,0.3);border-radius:6px;color:#a0a0c0;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">
+                            ✓ Close
+                        </button>
+                    ` : '<span style="color:rgba(255,255,255,0.2);font-size:0.8rem">-</span>'}
+                </td>
+            </tr>
+        `).join('');
+    }
+
+   async function closeComplaint(id) {
+    const res = await api(`/complaints/${id}/close`, 'PUT');
+    if (!res) return;
+    if (res.ok) {
+        toast('Complaint closed successfully ✅', 'success');
+        loadMyComplaints();
+    } else {
+        toast('Failed to close complaint!', 'error');
+    }
+}
+
+    async function raiseComplaint() {
+        const title = document.getElementById('title').value;
+        const category = document.getElementById('category').value;
+        const priority = document.getElementById('priority').value;
+        const description = document.getElementById('description').value;
+
+        if (!title || !category || !priority || !description) {
+            toast('Please fill all fields!', 'error');
+            return;
+        }
+
+        const res = await api('/complaints', 'POST', { title, category, priority, description });
+        if (!res) return;
+
+        if (res.ok) {
+            toast('Complaint raised successfully! 🎉', 'success');
+            document.getElementById('title').value = '';
+            document.getElementById('category').value = '';
+            document.getElementById('priority').value = '';
+            document.getElementById('description').value = '';
+            showTab('mycomplaints');
+        } else {
+            toast('Failed to raise complaint!', 'error');
+        }
+    }
+
+    async function handleLogout() {
+        await fetch(`${API}/auth/logout`, { method: 'POST', headers: { 'Authorization': `Bearer ${getToken()}` } });
+        localStorage.clear();
+        window.location.href = '/index.html';
+    }
+
+    loadMyComplaints();
+</script>
 </body>
 </html>

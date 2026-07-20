@@ -72,4 +72,12 @@ public class ComplaintController {
     public ResponseEntity<?> getAllAgents() {
         return ResponseEntity.ok(complaintService.getAllAgents());
     }
+
+    // USER: close their own resolved complaint
+    @PutMapping("/{id}/close")
+    @PreAuthorize("hasAuthority('USER')")
+    public ResponseEntity<ComplaintResponse> closeComplaint(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                complaintService.updateStatus(id, ComplaintStatus.CLOSED, null));
+    }
 }
